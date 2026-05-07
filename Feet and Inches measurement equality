@@ -1,0 +1,83 @@
+class Feet {
+    private final double value;
+
+    public Feet(double value) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            throw new IllegalArgumentException("Invalid feet value");
+        }
+        this.value = value;
+    }
+
+    public boolean equals(Feet other) {
+        if (other == null) {
+            return false;
+        }
+        return Double.compare(this.value, other.value) == 0;
+    }
+}
+
+class Inches {
+    private final double value;
+
+    public Inches(double value) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            throw new IllegalArgumentException("Invalid inches value");
+        }
+        this.value = value;
+    }
+
+    public boolean equals(Inches other) {
+        if (other == null) {
+            return false;
+        }
+        return Double.compare(this.value, other.value) == 0;
+    }
+}
+
+public class QuantityMeasurementApp {
+
+    public static boolean compareFeet(double value1, double value2) {
+        Feet feet1 = new Feet(value1);
+        Feet feet2 = new Feet(value2);
+        return feet1.equals(feet2);
+    }
+
+    public static boolean compareInches(double value1, double value2) {
+        Inches inches1 = new Inches(value1);
+        Inches inches2 = new Inches(value2);
+        return inches1.equals(inches2);
+    }
+
+    public static void main(String[] args) {
+
+        double feetValue1 = 5.0;
+        double feetValue2 = 5.0;
+
+        double inchesValue1 = 12.0;
+        double inchesValue2 = 12.0;
+
+        boolean feetResult = compareFeet(feetValue1, feetValue2);
+        boolean inchesResult = compareInches(inchesValue1, inchesValue2);
+
+        System.out.println("Feet Equality Result: " + feetResult);
+        System.out.println("Inches Equality Result: " + inchesResult);
+
+        System.out.println(compareFeet(7.5, 7.5));
+        System.out.println(compareFeet(3.2, 4.1));
+
+        System.out.println(compareInches(10.0, 10.0));
+        System.out.println(compareInches(8.5, 9.5));
+
+        try {
+            System.out.println(compareFeet(Double.NaN, 5.0));
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+        try {
+            System.out.println(compareInches(Double.POSITIVE_INFINITY, 5.0));
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+}
