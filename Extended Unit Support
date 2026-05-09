@@ -1,0 +1,83 @@
+enum LengthUnit {
+    FEET(12.0),
+    INCHES(1.0),
+    YARDS(36.0),
+    CENTIMETERS(0.393701);
+
+    private final double conversionFactor;
+
+    LengthUnit(double conversionFactor) {
+        this.conversionFactor = conversionFactor;
+    }
+
+    public double toBaseUnit(double value) {
+        return value * conversionFactor;
+    }
+}
+
+class QuantityLength {
+    private final double value;
+    private final LengthUnit unit;
+
+    public QuantityLength(double value, LengthUnit unit) {
+        if (Double.isNaN(value) || Double.isInfinite(value)) {
+            throw new IllegalArgumentException("Invalid numeric value");
+        }
+
+        if (unit == null) {
+            throw new IllegalArgumentException("Unit cannot be null");
+        }
+
+        this.value = value;
+        this.unit = unit;
+    }
+
+    private double toBaseUnit() {
+        return unit.toBaseUnit(value);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (!(obj instanceof QuantityLength)) {
+            return false;
+        }
+
+        QuantityLength other = (QuantityLength) obj;
+
+        return Math.abs(this.toBaseUnit() - other.toBaseUnit()) < 0.0001;
+    }
+
+    @Override
+    public int hashCode() {
+        return Double.hashCode(toBaseUnit());
+    }
+}
+
+public class QuantityMeasurementApp {
+    public static void main(String[] args) {
+
+        QuantityLength feet = new QuantityLength(3, LengthUnit.FEET);
+        QuantityLength inches = new QuantityLength(36, LengthUnit.INCHES);
+
+        System.out.println("3 Feet equals 36 Inches: " + feet.equals(inches));
+
+        QuantityLength yard = new QuantityLength(1, LengthUnit.YARDS);
+        QuantityLength feetValue = new QuantityLength(3, LengthUnit.FEET);
+
+        System.out.println("1 Yard equals 3 Feet: " + yard.equals(feetValue));
+
+        QuantityLength cm = new QuantityLength(2.54, LengthUnit.CENTIMETERS);
+        QuantityLength inch = new QuantityLength(1, LengthUnit.INCHES);
+
+        System.out.println("2.54 CM equals 1 Inch: " + cm.equals(inch));
+
+        QuantityLength yardValue = new QuantityLength(2, LengthUnit.YARDS);
+        QuantityLength inchValue = new QuantityLength(72, LengthUnit.INCHES);
+
+        System.out.println("2 Yards equals 72 Inches: " + yardValue.equals(inchValue));
+    }
+}
