@@ -1,0 +1,64 @@
+enum LengthUnit {
+    FEET(1.0),
+    INCHES(1.0 / 12),
+    YARDS(3.0),
+    CENTIMETERS(1.0 / 30.48);
+
+    private final double conversionFactor;
+
+    LengthUnit(double conversionFactor) {
+        this.conversionFactor = conversionFactor;
+    }
+
+    public double toBaseUnit(double value) {
+        return value * conversionFactor;
+    }
+
+    public double fromBaseUnit(double baseValue) {
+        return baseValue / conversionFactor;
+    }
+}
+
+class QuantityLength {
+    private final double value;
+    private final LengthUnit unit;
+
+    public QuantityLength(double value, LengthUnit unit) {
+        if (!Double.isFinite(value) || unit == null) {
+            throw new IllegalArgumentException("Invalid input");
+        }
+        this.value = value;
+        this.unit = unit;
+    }
+
+    public QuantityLength add(QuantityLength other) {
+        if (other == null) {
+            throw new IllegalArgumentException("Invalid length");
+        }
+
+        double firstInBase = unit.toBaseUnit(value);
+        double secondInBase = other.unit.toBaseUnit(other.value);
+
+        double sumInBase = firstInBase + secondInBase;
+
+        double resultValue = unit.fromBaseUnit(sumInBase);
+
+        return new QuantityLength(resultValue, unit);
+    }
+
+    @Override
+    public String toString() {
+        return value + " " + unit;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        QuantityLength length1 = new QuantityLength(1, LengthUnit.FEET);
+        QuantityLength length2 = new QuantityLength(12, LengthUnit.INCHES);
+
+        QuantityLength result = length1.add(length2);
+
+        System.out.println(result);
+    }
+}
