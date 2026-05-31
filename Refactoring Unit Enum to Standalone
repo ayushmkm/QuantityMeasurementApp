@@ -1,0 +1,89 @@
+enum LengthUnit {
+    FEET(1.0),
+    INCHES(1.0 / 12),
+    YARDS(3.0),
+    CENTIMETERS(1.0 / 30.48);
+
+    private final double conversionFactor;
+
+    LengthUnit(double conversionFactor) {
+        this.conversionFactor = conversionFactor;
+    }
+
+    public double convertToBaseUnit(double value) {
+        return value * conversionFactor;
+    }
+
+    public double convertFromBaseUnit(double baseValue) {
+        return baseValue / conversionFactor;
+    }
+}
+
+class QuantityLength {
+    private double value;
+    private LengthUnit unit;
+
+    public QuantityLength(double value, LengthUnit unit) {
+        this.value = value;
+        this.unit = unit;
+    }
+
+    public double getValue() {
+        return value;
+    }
+
+    public LengthUnit getUnit() {
+        return unit;
+    }
+
+    public boolean equals(QuantityLength other) {
+        double thisBase = unit.convertToBaseUnit(value);
+        double otherBase = other.unit.convertToBaseUnit(other.value);
+        return Double.compare(thisBase, otherBase) == 0;
+    }
+
+    public QuantityLength add(QuantityLength other) {
+        double thisBase = unit.convertToBaseUnit(value);
+        double otherBase = other.unit.convertToBaseUnit(other.value);
+
+        double resultBase = thisBase + otherBase;
+        double resultValue = unit.convertFromBaseUnit(resultBase);
+
+        return new QuantityLength(resultValue, unit);
+    }
+
+    public QuantityLength add(QuantityLength other, LengthUnit targetUnit) {
+        double thisBase = unit.convertToBaseUnit(value);
+        double otherBase = other.unit.convertToBaseUnit(other.value);
+
+        double resultBase = thisBase + otherBase;
+        double resultValue = targetUnit.convertFromBaseUnit(resultBase);
+
+        return new QuantityLength(resultValue, targetUnit);
+    }
+
+    @Override
+    public String toString() {
+        return value + " " + unit;
+    }
+}
+
+public class QuantityMeasurementApp {
+    public static void main(String[] args) {
+
+        QuantityLength length1 = new QuantityLength(1, LengthUnit.FEET);
+        QuantityLength length2 = new QuantityLength(12, LengthUnit.INCHES);
+
+        System.out.println(length1.equals(length2));
+
+        QuantityLength result1 = length1.add(length2);
+        System.out.println(result1);
+
+        QuantityLength result2 = length1.add(length2, LengthUnit.YARDS);
+        System.out.println(result2);
+
+        QuantityLength length3 = new QuantityLength(30.48, LengthUnit.CENTIMETERS);
+
+        System.out.println(length1.equals(length3));
+    }
+}
