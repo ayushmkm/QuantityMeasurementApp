@@ -1,0 +1,225 @@
+import java.util.Objects;
+
+interface IMeasurable {
+    double getConversionFactor();
+    double convertToBaseUnit(double value);
+    double convertFromBaseUnit(double baseValue);
+    String getUnitName();
+}
+
+enum LengthUnit implements IMeasurable {
+    FEET(12),
+    INCHES(1),
+    YARDS(36),
+    CENTIMETERS(0.393701);
+
+    private final double conversionFactor;
+
+    LengthUnit(double conversionFactor) {
+        this.conversionFactor = conversionFactor;
+    }
+
+    @Override
+    public double getConversionFactor() {
+        return conversionFactor;
+    }
+
+    @Override
+    public double convertToBaseUnit(double value) {
+        return value * conversionFactor;
+    }
+
+    @Override
+    public double convertFromBaseUnit(double baseValue) {
+        return baseValue / conversionFactor;
+    }
+
+    @Override
+    public String getUnitName() {
+        return name();
+    }
+}
+
+enum WeightUnit implements IMeasurable {
+    KILOGRAM(1000),
+    GRAM(1),
+    POUND(453.592);
+
+    private final double conversionFactor;
+
+    WeightUnit(double conversionFactor) {
+        this.conversionFactor = conversionFactor;
+    }
+
+    @Override
+    public double getConversionFactor() {
+        return conversionFactor;
+    }
+
+    @Override
+    public double convertToBaseUnit(double value) {
+        return value * conversionFactor;
+    }
+
+    @Override
+    public double convertFromBaseUnit(double baseValue) {
+        return baseValue / conversionFactor;
+    }
+
+    @Override
+    public String getUnitName() {
+        return name();
+    }
+}
+
+class Quantity<U extends IMeasurable> {
+
+    private final double value;
+    private final U unit;
+
+    public Quantity(double value, U unit) {
+        if (unit == null) {
+            throw new IllegalArgumentException("Unit cannot be null");
+        }
+
+        if (!Double.isFinite(value)) {
+            throw new IllegalArgumentException("Invalid value");
+        }
+
+        this.value = value;
+        this.unit = unit;
+    }
+
+    public Quantity<U> convertTo(U targetUnit) {
+        double baseValue = unit.convertToBaseUnit(value);
+        double convertedValue = targetUnit.convertFromBaseUnit(baseValue);
+
+        convertedValue = Math.round(convertedValue * 100.0) / 100.0;
+
+        return new Quantity<>(convertedValue, targetUnit);
+    }
+
+    public Quantity<U> add(Quantity<U> other) {
+        return add(other, this.unit);
+    }
+
+    public Quantity<U> add(Quantity<U> other, U targetUnit) {
+        double thisBase = unit.convertToBaseUnit(value);
+        double otherBase = other.unit.convertToBaseUnit(other.value);
+
+        double totalBase = thisBase + otherBase;
+
+        double result = targetUnit.convertFromBaseUnit(totalBase);
+        result = Math.round(result * 100.0) / 100.0;
+
+        return new Quantity<>(result, targetUnit);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        if (!(obj instanceof Quantity<?> other)) {
+            return false;
+        }
+
+        if (this.unit.getClass() != other.unit.getClass()) {
+            return false;
+        }
+
+        double thisBase = unit.convertToBaseUnit(value);
+        double otherBase = other.unit.convertToBaseUnit(other.value);
+
+        return Double.compare(thisBase, otherBase) == 0;
+    }
+
+    @Override
+    public int hashCode() {
+        double baseValue = unit.convertToBaseUnit(value);
+        return Objects.hash(unit.getClass(), baseValue);
+    }
+
+    @Override
+    public String toString() {
+        return value + " " + unit.getUnitName();
+    }
+}
+
+public class QuantityMeasurementApp {
+
+    public static <U extends IMeasurable> void demonstrateEquality(
+            Quantity<U> q1,
+            Quantity<U> q2) {
+
+        System.out.println(q1 + " equals " + q2 + " : " + q1.equals(q2));
+    }
+
+    public static <U extends IMeasurable> void demonstrateConversion(
+            Quantity<U> quantity,
+            U targetUnit) {
+
+        System.out.println(quantity + " -> " + quantity.convertTo(targetUnit));
+    }
+
+    public static <U extends IMeasurable> void demonstrateAddition(
+            Quantity<U> q1,
+            Quantity<U> q2) {
+
+        System.out.println(q1 + " + " + q2 + " = " + q1.add(q2));
+    }
+
+    public static <U extends IMeasurable> void demonstrateAddition(
+            Quantity<U> q1,
+            Quantity<U> q2,
+            U targetUnit) {
+
+        System.out.println(q1 + " + " + q2 + " = " + q1.add(q2, targetUnit));
+    }
+
+    public static void main(String[] args) {
+
+        Quantity<LengthUnit> oneFoot =
+                new Quantity<>(1, LengthUnit.FEET);
+
+        Quantity<LengthUnit> twelveInches =
+                new Quantity<>(12, LengthUnit.INCHES);
+
+        demonstrateEquality(oneFoot, twelveInches);
+
+        demonstrateConversion(
+                new Quantity<>(1, LengthUnit.YARDS),
+                LengthUnit.FEET);
+
+        demonstrateAddition(
+                new Quantity<>(1, LengthUnit.FEET),
+                new Quantity<>(12, LengthUnit.INCHES));
+
+        demonstrateAddition(
+                new Quantity<>(1, LengthUnit.FEET),
+                new Quantity<>(12, LengthUnit.INCHES),
+                LengthUnit.YARDS);
+
+        Quantity<WeightUnit> oneKilogram =
+                new Quantity<>(1, WeightUnit.KILOGRAM);
+
+        Quantity<WeightUnit> thousandGrams =
+                new Quantity<>(1000, WeightUnit.GRAM);
+
+        demonstrateEquality(oneKilogram, thousandGrams);
+
+        demonstrateConversion(
+                new Quantity<>(1, WeightUnit.KILOGRAM),
+                WeightUnit.POUND);
+
+        demonstrateAddition(
+                new Quantity<>(1, WeightUnit.KILOGRAM),
+                new Quantity<>(500, WeightUnit.GRAM));
+
+        demonstrateAddition(
+                new Quantity<>(1, WeightUnit.KILOGRAM),
+                new Quantity<>(500, WeightUnit.GRAM),
+                WeightUnit.POUND);
+    }
+}
