@@ -1,0 +1,222 @@
+import java.util.Objects;
+
+interface IMeasurable {
+    double getConversionFactor();
+    double convertToBaseUnit(double value);
+    double convertFromBaseUnit(double baseValue);
+    String getUnitName();
+}
+
+enum LengthUnit implements IMeasurable {
+    FEET(0.3048, "Feet"),
+    INCH(0.0254, "Inch"),
+    YARD(0.9144, "Yard"),
+    CENTIMETER(0.01, "Centimeter");
+
+    private final double conversionFactor;
+    private final String unitName;
+
+    LengthUnit(double conversionFactor, String unitName) {
+        this.conversionFactor = conversionFactor;
+        this.unitName = unitName;
+    }
+
+    public double getConversionFactor() {
+        return conversionFactor;
+    }
+
+    public double convertToBaseUnit(double value) {
+        return value * conversionFactor;
+    }
+
+    public double convertFromBaseUnit(double baseValue) {
+        return baseValue / conversionFactor;
+    }
+
+    public String getUnitName() {
+        return unitName;
+    }
+}
+
+enum WeightUnit implements IMeasurable {
+    KILOGRAM(1.0, "Kilogram"),
+    GRAM(0.001, "Gram"),
+    POUND(0.453592, "Pound");
+
+    private final double conversionFactor;
+    private final String unitName;
+
+    WeightUnit(double conversionFactor, String unitName) {
+        this.conversionFactor = conversionFactor;
+        this.unitName = unitName;
+    }
+
+    public double getConversionFactor() {
+        return conversionFactor;
+    }
+
+    public double convertToBaseUnit(double value) {
+        return value * conversionFactor;
+    }
+
+    public double convertFromBaseUnit(double baseValue) {
+        return baseValue / conversionFactor;
+    }
+
+    public String getUnitName() {
+        return unitName;
+    }
+}
+
+enum VolumeUnit implements IMeasurable {
+    LITRE(1.0, "Litre"),
+    MILLILITRE(0.001, "Millilitre"),
+    GALLON(3.78541, "Gallon");
+
+    private final double conversionFactor;
+    private final String unitName;
+
+    VolumeUnit(double conversionFactor, String unitName) {
+        this.conversionFactor = conversionFactor;
+        this.unitName = unitName;
+    }
+
+    public double getConversionFactor() {
+        return conversionFactor;
+    }
+
+    public double convertToBaseUnit(double value) {
+        return value * conversionFactor;
+    }
+
+    public double convertFromBaseUnit(double baseValue) {
+        return baseValue / conversionFactor;
+    }
+
+    public String getUnitName() {
+        return unitName;
+    }
+}
+
+class Quantity<U extends Enum<U> & IMeasurable> {
+    private static final double EPSILON = 0.0001;
+    private final double value;
+    private final U unit;
+
+    public Quantity(double value, U unit) {
+        if (value < 0) {
+            throw new IllegalArgumentException("Value cannot be negative");
+        }
+        this.value = value;
+        this.unit = unit;
+    }
+
+    public double getValue() {
+        return value;
+    }
+
+    public U getUnit() {
+        return unit;
+    }
+
+    public Quantity<U> convertTo(U targetUnit) {
+        double baseValue = unit.convertToBaseUnit(value);
+        double convertedValue = targetUnit.convertFromBaseUnit(baseValue);
+        return new Quantity<>(convertedValue, targetUnit);
+    }
+
+    public Quantity<U> add(Quantity<U> other) {
+        return add(other, this.unit);
+    }
+
+    public Quantity<U> add(Quantity<U> other, U targetUnit) {
+        double firstBase = unit.convertToBaseUnit(value);
+        double secondBase = other.unit.convertToBaseUnit(other.value);
+        double sumBase = firstBase + secondBase;
+        double resultValue = targetUnit.convertFromBaseUnit(sumBase);
+        return new Quantity<>(resultValue, targetUnit);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+
+        if (!(obj instanceof Quantity<?> other))
+            return false;
+
+        if (!unit.getClass().equals(other.unit.getClass()))
+            return false;
+
+        double thisBase = unit.convertToBaseUnit(value);
+        double otherBase = ((IMeasurable) other.unit).convertToBaseUnit(other.value);
+
+        return Math.abs(thisBase - otherBase) < EPSILON;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(unit.convertToBaseUnit(value));
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%.4f %s", value, unit.getUnitName());
+    }
+}
+
+public class QuantityMeasurementApp {
+    public static void main(String[] args) {
+
+        Quantity<LengthUnit> oneFoot = new Quantity<>(1, LengthUnit.FEET);
+        Quantity<LengthUnit> twelveInches = new Quantity<>(12, LengthUnit.INCH);
+
+        System.out.println("1 Foot equals 12 Inches: " + oneFoot.equals(twelveInches));
+
+        Quantity<LengthUnit> lengthConversion =
+                oneFoot.convertTo(LengthUnit.CENTIMETER);
+        System.out.println("1 Foot in Centimeters: " + lengthConversion);
+
+        Quantity<LengthUnit> lengthSum =
+                oneFoot.add(twelveInches, LengthUnit.YARD);
+        System.out.println("1 Foot + 12 Inches in Yards: " + lengthSum);
+
+        Quantity<WeightUnit> oneKilogram =
+                new Quantity<>(1, WeightUnit.KILOGRAM);
+        Quantity<WeightUnit> thousandGrams =
+                new Quantity<>(1000, WeightUnit.GRAM);
+
+        System.out.println("1 Kilogram equals 1000 Grams: "
+                + oneKilogram.equals(thousandGrams));
+
+        Quantity<WeightUnit> weightConversion =
+                oneKilogram.convertTo(WeightUnit.POUND);
+        System.out.println("1 Kilogram in Pounds: " + weightConversion);
+
+        Quantity<WeightUnit> weightSum =
+                oneKilogram.add(thousandGrams, WeightUnit.KILOGRAM);
+        System.out.println("1 Kilogram + 1000 Grams: " + weightSum);
+
+        Quantity<VolumeUnit> oneLitre =
+                new Quantity<>(1, VolumeUnit.LITRE);
+        Quantity<VolumeUnit> thousandMillilitres =
+                new Quantity<>(1000, VolumeUnit.MILLILITRE);
+
+        System.out.println("1 Litre equals 1000 Millilitres: "
+                + oneLitre.equals(thousandMillilitres));
+
+        Quantity<VolumeUnit> volumeConversion =
+                oneLitre.convertTo(VolumeUnit.GALLON);
+        System.out.println("1 Litre in Gallons: " + volumeConversion);
+
+        Quantity<VolumeUnit> volumeSum =
+                oneLitre.add(thousandMillilitres, VolumeUnit.LITRE);
+        System.out.println("1 Litre + 1000 Millilitres: " + volumeSum);
+
+        System.out.println("Volume equals Length: "
+                + oneLitre.equals(oneFoot));
+
+        System.out.println("Volume equals Weight: "
+                + oneLitre.equals(oneKilogram));
+    }
+}
